@@ -1,0 +1,56 @@
+---
+# defaults file for software_support
+
+docker_version: 1.2.5
+
+
+# Minikube version number
+minikube_version: '1.26.1'
+
+# Directory to store files downloaded for Minikube
+minikube_download_dir: "{{ x_ansible_download_dir | default(ansible_env.HOME + '/.ansible/tmp/downloads') }}"
+
+
+# "kubectl" version to install
+kubectl_version: "1.23.2"
+
+kubectl_download_filetype: "binary"
+# SHA512 checksum of the .tar.gz file (see https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.23.md#client-binaries)
+kubectl_checksum_archive: "sha512:c8653aa2bce09a29041b7347ce2d45710abd8bc3cfe79265e0aa04a24c2028344f0b280f52b2858e869bf997cd0e71b6ac8f22ec8a2b4b39328e73339746f565"
+# SHA512 checksum of the binary (see https://storage.googleapis.com/kubernetes-release/release/v1.23.1/bin/linux/amd64/kubectl.sha512)
+kubectl_checksum_binary: "sha512:578e8ab8f10240073cc39130c28b384805f1b4c758c22574c709a5f4e1a8ea79cd3772e662f47e838eaf3ef234b55f073098984568218652cae0c42b7d616025"
+
+# Where to install "kubectl" binary
+kubectl_bin_directory: "/usr/local/bin"
+
+# Directory to store the kubectl archive
+kubectl_tmp_directory: "{{ lookup('env', 'TMPDIR') | default('/tmp',true) }}"
+
+# Owner of "kubectl" binary
+kubectl_owner: "root"
+
+# Group of "kubectl" binary
+kubectl_group: "root"
+
+# Specifies the permissions of the "kubectl" binary
+kubectl_binary_mode: "0755"
+
+# Operating system on which "kubectl" should run on
+kubectl_os: "linux"  # use "darwin" for MacOS X, "windows" for Windows
+
+# Processor architecture "kubectl" should run on
+kubectl_arch: "amd64"  # other possible values: "386","arm64","arm","ppc64le","s390x"
+
+
+# Virtualbox default values
+
+virtualbox_version: 6.1 # could also be 5.0 or 4.3 etc.
+# Sub versions for Vbox extension packs and phpVirtualbox:
+virtualbox_extpack_version: "{{ virtualbox_version}}.34"
+virtualbox_php_version: "{{ virtualbox_version}}-0"
+
+# Should not need changing:
+virtualbox_repo_base_url: "https://download.virtualbox.org/virtualbox"
+
+virtualbox_user: vbox
+virtualbox_user_pw: changeme
