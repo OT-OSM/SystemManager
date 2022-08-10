@@ -1,0 +1,21 @@
+---
+# vars file for file_storage
+
+local_git_repo_path: /home/ubuntu/gitrepo/
+
+local_files_location:
+  - /home/opstr/.ssh/config
+  - /home/opstr/Desktop/dir1/file1
+  - /home/opstr/Downloads/documentfile
+  - /home/opstr/Downloads/documentfile1
+  - /home/opstr/Downloads/documentfile2
+  - /home/opstr/Downloads/documentfile3
+  - /home/opstr/Downloads/documentfile4
+  - /home/opstr/Downloads/documentfile5
+
+user_name: akash
+user_email: akash@gmail.com
+
+git_repo_url: https://github.com/akasharrow/demo3.git
+
+mode: https

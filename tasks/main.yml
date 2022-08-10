@@ -1,0 +1,32 @@
+---
+#tasks file for file_storage
+
+- name: Create a repo to work as git repository
+  file:
+    path: "{{ local_git_repo_path }}"
+    state: directory
+    recurse: yes
+
+- name: Initialize git repository
+  command: git init "{{ local_git_repo_path }}"
+
+- name: Copy files to local git repo which you want to push on git
+  copy:
+    src: "{{ item }}"
+    dest: "{{ local_git_repo_path }}"
+  with_items: "{{ local_files_location }}"
+
+- name: HTTPS | push all changes.
+  git_acp:
+    user: "{{ gituser }}"
+    token: "{{ gitpass }}"    
+    path: "{{ local_git_repo_path }}"
+    branch: "{{ branch_name }}"
+    comment: Add all the things
+    add: [ "." ]
+    mode: "{{ mode }}"
+    url: "{{ git_repo_url }}"
+    user_name: "{{ user_name }}"
+    user_email: "{{ user_email }}"
+
+
