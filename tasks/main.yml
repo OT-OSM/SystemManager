@@ -1,0 +1,206 @@
+---
+# tasks file for software_support
+
+- name: Install basic tools
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items: "{{ basic_tools }}"
+
+# Docker installation
+
+- name: Install apt-transport-https
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  with_items: "{{ docker_dependencies }}"
+
+- name: Add signing key
+  apt_key:
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    state: present
+
+- name: Add repository into sources list
+  apt_repository:
+    repo: "deb [arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+
+- name: Install Docker
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+  with_items: "{{ docker_install }}"
+
+- name: add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+# Terraform setup
+
+- name: Download and unarchive the zip fle
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/{{ docker_version }}/terraform_{{ docker_version }}_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: yes
+
+
+# Packer setup
+
+- name: Add Hashicorp apt key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: Add the official HashiCorp Linux repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release | lower }} main"
+    state: present
+
+- name: Install HashiCorp Packer
+  apt:
+    name: packer
+    state: present
+    update_cache: yes
+
+
+# Virtualbox setup
+
+- name: Install build-esential and dkms (prepare)
+  apt:
+    name:
+      - build-essential
+      - dkms
+      - unzip
+    state: present
+    update_cache: yes
+
+- name: Add VirtualBox repo keys
+  apt_key:
+    url: "https://www.virtualbox.org/download/{{ item }}.asc"
+    state: present
+  with_items:
+    - oracle_vbox
+    - oracle_vbox_2016
+
+- name: Add VirtualBox repo
+  apt_repository:
+    repo: 'deb {{ virtualbox_repo_base_url }}/debian {{ ansible_distribution_release }} contrib'
+    state: present
+    update_cache: yes
+
+- name: "Install virtualbox in version {{ virtualbox_version }}"
+  apt:
+    name: virtualbox-{{ virtualbox_version }}
+    state: present
+
+- name: Check if extension pack is already installed
+  shell: "VBoxManage list extpacks"
+  register: extpack_list
+
+- name: Output installed extpacks
+  debug:
+    var: download_result.stdtout
+
+- name: Download VirtualBox extension pack
+  get_url:
+    url: "{{ virtualbox_repo_base_url }}/{{ virtualbox_extpack_version }}/Oracle_VM_VirtualBox_Extension_Pack-{{ virtualbox_extpack_version }}.vbox-extpack"
+    dest: /tmp/
+    force: yes
+  register: download_result
+  when: 'extpack_list.stdout == "Extension Packs: 0"'
+
+- name: Output downloaded VirtualBox extension pack file name
+  debug:
+    var: download_result.dest
+    verbosity: 1
+
+- name: Install VirtualBox extension pack
+  shell: "echo 'y' | VBoxManage extpack install --replace {{ download_result.dest }}"
+  when: 'extpack_list.stdout == "Extension Packs: 0"'
+
+
+
+
+# Minikube setup
+
+- name: create download directory
+  file:
+    state: directory
+    mode: 'u=rwx,go=rx'
+    dest: '{{ minikube_download_dir }}'
+
+- name: download sha256sum
+  get_url:
+    url: '{{ minikube_mirror }}/{{ minikube_redis_filename }}.sha256'
+    dest: '{{ minikube_download_dir }}/{{ minikube_download_filename }}.sha256'
+    force: no
+    use_proxy: yes
+    validate_certs: yes
+    mode: 'u=rw,go=r'
+
+- name: read sha256sum
+  slurp:
+    src: '{{ minikube_download_dir }}/{{ minikube_download_filename }}.sha256'
+  register: minikube_sha256sum
+
+- name: download Minikube
+  get_url:
+    url: '{{ minikube_mirror }}/{{ minikube_redis_filename }}'
+    dest: '{{ minikube_download_dir }}/{{ minikube_download_filename }}'
+    checksum: 'sha256:{{ minikube_sha256sum.content | b64decode | trim }}'
+    force: no
+    use_proxy: yes
+    validate_certs: yes
+    mode: 'u=rw,go=r'
+
+- name: create the Minikube installation dir
+  become: yes
+  file:
+    state: directory
+    owner: root
+    group: root
+    mode: 'u=rwx,go=rx'
+    dest: '{{ minikube_install_dir }}'
+
+- name: install Minikube
+  become: yes
+  copy:
+    src: '{{ minikube_download_dir }}/{{ minikube_download_filename }}'
+    remote_src: yes
+    dest: '{{ minikube_install_path }}'
+    force: yes
+    owner: root
+    group: root
+    mode: 'u=rwx,go=rx'
+
+# Kubectl setup
+
+- name: Download kubectl archive
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/v{{ kubectl_version }}/kubernetes-client-{{ kubectl_os }}-{{ kubectl_arch }}.tar.gz"
+    checksum: "{{ kubectl_checksum_archive }}"
+    dest: "{{ kubectl_tmp_directory }}"
+
+
+- name: Unarchive kubernetes-client
+  unarchive:
+    src: "{{ kubectl_tmp_directory }}/kubernetes-client-{{ kubectl_os }}-{{ kubectl_arch }}.tar.gz"
+    dest: "{{ kubectl_tmp_directory }}"
+    remote_src: true
+
+
+- name: Copy kubectl binary to destination directory
+  copy:
+    src: "{{ kubectl_tmp_directory }}/kubernetes/client/bin/{{ item }}"
+    dest: "{{ kubectl_bin_directory }}/{{ item }}"
+    mode: "{{ kubectl_binary_mode }}"
+    owner: "{{ kubectl_owner }}"
+    group: "{{ kubectl_group }}"
+    remote_src: true
+  with_items:
+    - kubectl
