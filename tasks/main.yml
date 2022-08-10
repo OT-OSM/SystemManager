@@ -1,0 +1,27 @@
+---
+# tasks file for repository_management
+
+
+- name: Create directory to store git repos
+  file:
+    path: "{{directory_path}}"
+    state: directory
+    recurse: yes
+
+
+- name: Clone the remote repositories in local system
+  git:
+    repo: "{{ item.repo_link }}"
+    dest: "{{ directory_path }}/{{ item.repo_dir }}"
+    clone: yes
+    update: yes
+    version: "{{ item.branch }}"
+  loop: "{{ list_of_repos }}"
+
+- name: Give ownership to git repos
+  file:
+    path: "{{ directory_path }}/{{ item.repo_dir }}"
+    owner: "{{ repos_owner }}"
+    group: "{{ repos_group }}"
+    recurse: yes
+  loop: "{{ list_of_repos }}"

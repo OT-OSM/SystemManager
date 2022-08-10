@@ -1,0 +1,15 @@
+---
+# vars file for repository_management
+
+directory_path: /home/ubuntu/repo_list/
+
+list_of_repos:
+  - { repo_link: https://github.com/OT-OSM/usermanagement.git, repo_dir: usermanagement, branch: master }
+  - { repo_link: https://github.com/OT-OSM/usermanagement.git, repo_dir: usermanagement, branch: user_creation_akash }
+  - { repo_link: https://github.com/OT-OSM/jenkins.git, repo_dir: jenkins, branch: master }
+  
+  #- { repo_link: git@github.com:akasharrow/demo3.git, repo_dir: demo3, branch: master }       # use to clone with ssh url but first save server public key to github
+
+repos_owner: ubuntu
+
+repos_group: ubuntu
